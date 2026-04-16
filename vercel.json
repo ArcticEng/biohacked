@@ -1,0 +1,9 @@
+{
+  "regions": ["dub1"],
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/route.js": {
+      "maxDuration": 30
+    }
+  }
+}
