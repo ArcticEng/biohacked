@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@400;500;600;700;800&display=swap');
+
+/* ─── THEME VARIABLES ──────────────────────────── */
+/* Default = DARK. Brand accents stay identical across themes. */
+:root,
+:root[data-theme="dark"] {
+  /* Brand — same in both modes */
+  --brand-purple: #a855f7;
+  --brand-pink: #ec4899;
+  --brand-violet: #8b5cf6;
+  --brand-lavender: #c084fc;
+  --brand-green: #22c55e;
+  --brand-red: #ef4444;
+  --brand-amber: #f59e0b;
+  --brand-teal: #14b8a6;
+  --brand-blue: #3b82f6;
+
+  /* Surfaces & text — theme-dependent */
+  --bg-primary: #0a0a0f;
+  --bg-gradient: linear-gradient(145deg, #0a0a0f 0%, #0d0b1a 40%, #110e1f 100%);
+  --bg-card: rgba(255,255,255,0.03);
+  --bg-elevated: rgba(255,255,255,0.05);
+  --bg-subtle: rgba(255,255,255,0.02);
+  --bg-input: rgba(255,255,255,0.04);
+  --bg-overlay-strong: rgba(10,10,15,0.95);
+
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.1);
+
+  --text-1: #fff;
+  --text-2: rgba(255,255,255,0.7);
+  --text-3: rgba(255,255,255,0.4);
+  --text-4: rgba(255,255,255,0.2);
+  --placeholder: rgba(255,255,255,0.25);
+  --scrollbar: rgba(255,255,255,0.1);
+
+  /* Brand alpha surfaces — used for active pills, highlights */
+  --purple-surface: rgba(168,85,247,0.08);
+  --purple-border: rgba(168,85,247,0.2);
+  --pink-surface: rgba(236,72,153,0.08);
+  --amber-surface: rgba(245,158,11,0.08);
+  --green-surface: rgba(34,197,94,0.08);
+  --red-surface: rgba(239,68,68,0.08);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg-primary: #f5f6fa;
+  --bg-gradient: linear-gradient(145deg, #f5f6fa 0%, #eef0f8 40%, #e8ecf5 100%);
+  --bg-card: #ffffff;
+  --bg-elevated: rgba(15,23,42,0.04);
+  --bg-subtle: rgba(15,23,42,0.02);
+  --bg-input: #ffffff;
+  --bg-overlay-strong: rgba(245,246,250,0.95);
+
+  --border: rgba(15,23,42,0.08);
+  --border-strong: rgba(15,23,42,0.14);
+
+  --text-1: #0f172a;
+  --text-2: rgba(15,23,42,0.75);
+  --text-3: rgba(15,23,42,0.5);
+  --text-4: rgba(15,23,42,0.3);
+  --placeholder: rgba(15,23,42,0.3);
+  --scrollbar: rgba(15,23,42,0.15);
+
+  /* Slightly darker alpha for better contrast on light bg */
+  --purple-surface: rgba(168,85,247,0.10);
+  --purple-border: rgba(168,85,247,0.28);
+  --pink-surface: rgba(236,72,153,0.10);
+  --amber-surface: rgba(245,158,11,0.12);
+  --green-surface: rgba(34,197,94,0.10);
+  --red-surface: rgba(239,68,68,0.10);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-1);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.2s;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  color: inherit;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=number] { -moz-appearance: textfield; }
+
+::placeholder { color: var(--placeholder); }
+
+input[type=range] {
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border-strong);
+  border-radius: 2px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand-purple);
+  cursor: pointer;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+
+@keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+
+/* ─── LIGHT-MODE PATCHES ───────────────────────
+   The codebase has scattered inline styles using rgba(255,255,255,...) literals
+   that assume dark bg. These selectors soften them in light mode.
+─────────────────────────────────────────────── */
+:root[data-theme="light"] [style*="rgba(255,255,255,0.04)"] { background: var(--bg-input) !important; }
+:root[data-theme="light"] [style*="rgba(255,255,255,0.02)"] { background: var(--bg-subtle) !important; }
+:root[data-theme="light"] [style*="rgba(255,255,255,0.03)"] { background: var(--bg-card) !important; }
+:root[data-theme="light"] [style*="rgba(255,255,255,0.05)"] { background: var(--bg-elevated) !important; }
+:root[data-theme="light"] [style*="rgba(255,255,255,0.06)"] { background: var(--bg-elevated) !important; }
+:root[data-theme="light"] [style*="rgba(10,10,15,0.95)"] { background: var(--bg-overlay-strong) !important; }
+:root[data-theme="light"] [style*="background: #1a1a2e"],
+:root[data-theme="light"] [style*="background:#1a1a2e"] { background: var(--bg-card) !important; color: var(--text-1) !important; }
+
+/* Force text color on elements that hardcode #fff */
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select { color: var(--text-1) !important; }

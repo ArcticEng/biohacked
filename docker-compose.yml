@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════
+# Bio-Hacked — Docker Compose (Development)
+# ═══════════════════════════════════════════════════
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: biohacked-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: biohacked
+      POSTGRES_PASSWORD: biohacked_dev_2026
+      POSTGRES_DB: biohacked
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U biohacked"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: biohacked-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://biohacked:biohacked_dev_2026@db:5432/biohacked?schema=public"
+      JWT_SECRET: "dev-secret-change-in-production"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      PAYFAST_MERCHANT_ID: "${PAYFAST_MERCHANT_ID}"
+      PAYFAST_MERCHANT_KEY: "${PAYFAST_MERCHANT_KEY}"
+      PAYFAST_PASSPHRASE: "${PAYFAST_PASSPHRASE}"
+      PAYFAST_MODE: "sandbox"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./public:/app/public
+
+volumes:
+  pgdata:

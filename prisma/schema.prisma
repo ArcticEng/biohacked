@@ -1,0 +1,596 @@
+// ═══════════════════════════════════════════════════
+// BIO-HACKED Database Schema (Extended)
+// PostgreSQL via Prisma ORM
+// ═══════════════════════════════════════════════════
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ─── USER & AUTH ───────────────────────────────────
+
+enum UserRole {
+  CLIENT
+  COACH
+  EDUCATOR
+  ADMIN
+}
+
+enum Goal {
+  BUILD
+  CUT
+  MAINTAIN
+  PERFORMANCE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+  COACH
+}
+
+model User {
+  id            String           @id @default(uuid())
+  email         String           @unique
+  passwordHash  String
+  name          String
+  role          UserRole         @default(CLIENT)
+  avatar        String?
+  gender        Gender?
+  age           Int?
+  goal          Goal             @default(MAINTAIN)
+  tier          SubscriptionTier @default(FREE)
+
+  // Body stats
+  height        Float?           // cm
+  bodyFat       Float?           // %
+
+  // Daily macro targets
+  calories      Int              @default(2200)
+  protein       Int              @default(180)
+  carbs         Int              @default(250)
+  fat           Int              @default(70)
+
+  // Educator-specific
+  credentials   String?          // "PhD Sports Science, CSCS"
+  speciality    String?          // "Bodybuilding & Nutrition"
+  verified      Boolean          @default(false)
+
+  // Client permissions (set by their coach)
+  allowMealSwap Boolean          @default(false)
+
+  // Freemium tracking
+  weeklyRecipeCount  Int         @default(0)
+  weeklyResetAt      DateTime    @default(now())
+
+  // Menstrual cycle tracking (female clients)
+  cycleLength        Int?        // 28 typical
+  lastCycleStart     DateTime?
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  savedRecipes      SavedRecipe[]
+  mealPlans         MealPlan[]
+  checkins          Checkin[]
+  trainingLogs      TrainingLog[]
+  bodyMeasurements  BodyMeasurement[]
+  forumPosts        ForumPost[]
+  forumReplies      ForumReply[]
+  forumLikes        ForumLike[]
+  videos            EducationVideo[]  @relation("VideoAuthor")
+  bookings          Booking[]
+
+  // Coaching relations
+  coachClients      CoachClient[]   @relation("CoachRelation")
+  clientCoaches     CoachClient[]   @relation("ClientRelation")
+  coachingNotes     CoachingNote[]  @relation("CoachNotes")
+  clientNotes       CoachingNote[]  @relation("ClientNotes")
+
+  // Subscription
+  subscription      Subscription?
+  payments          Payment[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// ─── COACHING ──────────────────────────────────────
+
+model CoachClient {
+  id        String   @id @default(uuid())
+  coachId   String
+  clientId  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  coach     User     @relation("CoachRelation", fields: [coachId], references: [id])
+  client    User     @relation("ClientRelation", fields: [clientId], references: [id])
+
+  @@unique([coachId, clientId])
+  @@index([coachId])
+  @@index([clientId])
+}
+
+model CoachingNote {
+  id        String   @id @default(uuid())
+  coachId   String
+  clientId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coach     User     @relation("CoachNotes", fields: [coachId], references: [id])
+  client    User     @relation("ClientNotes", fields: [clientId], references: [id])
+
+  @@index([coachId, clientId])
+  @@index([createdAt])
+}
+
+// ─── NUTRITION ─────────────────────────────────────
+
+model Recipe {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  calories     Int
+  protein      Int
+  carbs        Int
+  fat          Int
+  prepTime     String?
+  ingredients  Json
+  method       Json
+  tips         String?  @db.Text
+
+  mode         String?  @default("macro")
+  event        String?
+  maxPrepTime  Int?
+
+  prompt       String?  @db.Text
+  aiModel      String?
+
+  createdAt    DateTime @default(now())
+
+  savedBy      SavedRecipe[]
+  mealPlanMeals MealPlanMeal[]
+
+  @@index([name])
+}
+
+model SavedRecipe {
+  id        String   @id @default(uuid())
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId])
+  @@index([userId])
+}
+
+model MealPlan {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String   @default("Daily Meal Plan")
+  totalCalories  Int
+  totalProtein   Int
+  totalCarbs     Int
+  totalFat       Int
+  goal           Goal
+  date           DateTime @default(now())
+
+  prompt         String?  @db.Text
+  aiModel        String?
+  mode           String?  @default("ai")
+
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id])
+  meals          MealPlanMeal[]
+
+  @@index([userId])
+  @@index([date])
+}
+
+model MealPlanMeal {
+  id           String   @id @default(uuid())
+  mealPlanId   String
+  recipeId     String?
+  name         String
+  time         String?
+  order        Int      @default(0)
+  calories     Int
+  protein      Int
+  carbs        Int
+  fat          Int
+  foods        Json
+  instructions String?  @db.Text
+  completed    Boolean  @default(false)
+  swappedAt    DateTime?
+
+  mealPlan     MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe       Recipe?  @relation(fields: [recipeId], references: [id])
+
+  @@index([mealPlanId])
+}
+
+// ─── CHECK-INS ─────────────────────────────────────
+
+enum CheckinStatus {
+  PENDING
+  REVIEWED
+  ARCHIVED
+}
+
+enum CheckinStyle {
+  DETAILED
+  LIFESTYLE
+}
+
+model Checkin {
+  id                String        @id @default(uuid())
+  userId            String
+  date              DateTime      @default(now())
+  status            CheckinStatus @default(PENDING)
+  style             CheckinStyle  @default(DETAILED)
+
+  weight            Float?
+  calories          Int?
+  protein           Float?
+  hydration         Float?
+  caffeine          Int?
+  cravings          String?
+  appetite          String?
+  digestionRating   Int?
+
+  steps             Int?
+  cardioMinutes     Int?
+  trainingStatus    String?
+  trainingRating    Int?
+
+  sleepHours        Float?
+  sleepQuality      Int?
+  energyLevel       Int?
+  stressLevel       Int?
+  sorenessLevel     Int?
+
+  supplements       String[]      @default([])
+
+  lifestyleTraining    String?    @db.Text
+  lifestyleRecovery    String?    @db.Text
+  lifestyleDiet        String?    @db.Text
+  lifestyleSteps       String?    @db.Text
+  lifestyleHydration   String?    @db.Text
+  lifestyleEvents      String?    @db.Text
+  lifestyleWin         String?    @db.Text
+  lifestyleFromCoach   String?    @db.Text
+
+  digestNotes       String?       @db.Text
+  generalNotes      String?       @db.Text
+
+  coachFeedback     String?       @db.Text
+  feedbackVideoUrl  String?
+  feedbackDate      DateTime?
+
+  photos            CheckinPhoto[]
+
+  createdAt         DateTime      @default(now())
+
+  user              User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+model CheckinPhoto {
+  id        String   @id @default(uuid())
+  checkinId String
+  url       String
+  type      String   @default("front")
+  createdAt DateTime @default(now())
+
+  checkin   Checkin  @relation(fields: [checkinId], references: [id], onDelete: Cascade)
+}
+
+// ─── BODY MEASUREMENTS ────────────────────────────
+
+model BodyMeasurement {
+  id         String   @id @default(uuid())
+  userId     String
+  date       DateTime @default(now())
+
+  arms       Float?
+  shoulders  Float?
+  back       Float?
+  waist      Float?
+  hips       Float?
+  glutes     Float?
+  quads      Float?
+
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+// ─── TRAINING ──────────────────────────────────────
+
+model TrainingProgram {
+  id          String             @id @default(uuid())
+  name        String
+  createdById String
+  assignedTo  String?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  days        TrainingProgramDay[]
+}
+
+model TrainingProgramDay {
+  id         String               @id @default(uuid())
+  programId  String
+  dayName    String
+  focus      String?
+  order      Int                  @default(0)
+
+  program    TrainingProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises  TrainingProgramExercise[]
+
+  @@index([programId])
+}
+
+model TrainingProgramExercise {
+  id        String             @id @default(uuid())
+  dayId     String
+  name      String
+  sets      Int                @default(3)
+  reps      String             @default("8-10")
+  weight    Float?
+  rpe       Int?
+  notes     String?
+  order     Int                @default(0)
+
+  day       TrainingProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@index([dayId])
+}
+
+model TrainingLog {
+  id          String            @id @default(uuid())
+  userId      String
+  date        DateTime          @default(now())
+  name        String
+  programDayId String?
+  notes       String?           @db.Text
+  duration    Int?
+
+  exercises   TrainingLogExercise[]
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+model TrainingLogExercise {
+  id       String      @id @default(uuid())
+  logId    String
+  name     String
+  order    Int         @default(0)
+
+  sets     TrainingLogSet[]
+  log      TrainingLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+
+  @@index([logId])
+}
+
+model TrainingLogSet {
+  id         String              @id @default(uuid())
+  exerciseId String
+  setNumber  Int
+  reps       Int?
+  weight     Float?
+  rpe        Int?
+  completed  Boolean             @default(true)
+
+  exercise   TrainingLogExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([exerciseId])
+}
+
+// ─── COMMUNITY FORUM ───────────────────────────────
+
+model ForumPost {
+  id        String       @id @default(uuid())
+  authorId  String
+  title     String
+  body      String       @db.Text
+  tags      String[]
+  pinned    Boolean      @default(false)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  author    User         @relation(fields: [authorId], references: [id])
+  replies   ForumReply[]
+  likes     ForumLike[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model ForumReply {
+  id        String    @id @default(uuid())
+  postId    String
+  authorId  String
+  body      String    @db.Text
+
+  createdAt DateTime  @default(now())
+
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+
+  @@index([postId])
+}
+
+model ForumLike {
+  id        String    @id @default(uuid())
+  postId    String
+  userId    String
+
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+// ─── EDUCATION ─────────────────────────────────────
+
+model EducationVideo {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?  @db.Text
+  videoUrl     String
+  thumbnailUrl String?
+  duration     Int?
+  category     String
+  authorName   String
+  authorId     String?
+  approved     Boolean  @default(false)
+  views        Int      @default(0)
+
+  createdAt    DateTime @default(now())
+
+  author       User?    @relation("VideoAuthor", fields: [authorId], references: [id])
+
+  @@index([category])
+  @@index([approved])
+  @@index([authorId])
+}
+
+model ResearchPaper {
+  id          String   @id @default(uuid())
+  title       String
+  abstract    String?  @db.Text
+  authors     String[]
+  journal     String?
+  year        Int?
+  doi         String?  @unique
+  url         String?
+  category    String
+  aiSummary   String?  @db.Text
+
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+}
+
+// ─── BOOKING MARKETPLACE ──────────────────────────
+
+model ServiceProvider {
+  id          String   @id @default(uuid())
+  name        String
+  type        String
+  description String?  @db.Text
+  price       Float
+  currency    String   @default("ZAR")
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+
+  address     String?
+  city        String
+  suburb      String?
+  latitude    Float?
+  longitude   Float?
+
+  nextAvailable DateTime?
+
+  active      Boolean  @default(true)
+  verified    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  bookings    Booking[]
+
+  @@index([type])
+  @@index([city])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Booking {
+  id           String          @id @default(uuid())
+  userId       String
+  providerId   String
+  scheduledFor DateTime
+  status       BookingStatus   @default(PENDING)
+  notes        String?         @db.Text
+  totalAmount  Float
+
+  createdAt    DateTime        @default(now())
+
+  user         User            @relation(fields: [userId], references: [id])
+  provider     ServiceProvider @relation(fields: [providerId], references: [id])
+
+  @@index([userId])
+  @@index([providerId])
+  @@index([scheduledFor])
+}
+
+// ─── PAYMENTS & SUBSCRIPTIONS ──────────────────────
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Subscription {
+  id             String           @id @default(uuid())
+  userId         String           @unique
+  tier           SubscriptionTier
+  active         Boolean          @default(true)
+  startDate      DateTime         @default(now())
+  endDate        DateTime?
+  payfastToken   String?
+
+  user           User             @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  userId         String
+  amount         Float
+  currency       String        @default("ZAR")
+  status         PaymentStatus @default(PENDING)
+  description    String?
+  payfastPaymentId String?     @unique
+
+  createdAt      DateTime      @default(now())
+
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
