@@ -65,19 +65,20 @@ model User {
   fat           Int              @default(70)
 
   // Educator-specific
-  credentials   String?          // "PhD Sports Science, CSCS"
-  speciality    String?          // "Bodybuilding & Nutrition"
+  credentials   String?
+  speciality    String?
   verified      Boolean          @default(false)
 
   // Client permissions (set by their coach)
   allowMealSwap Boolean          @default(false)
+  photoDay      String?          // Day of week photos are required e.g. "Monday"
 
   // Freemium tracking
   weeklyRecipeCount  Int         @default(0)
   weeklyResetAt      DateTime    @default(now())
 
   // Menstrual cycle tracking (female clients)
-  cycleLength        Int?        // 28 typical
+  cycleLength        Int?
   lastCycleStart     DateTime?
 
   createdAt     DateTime         @default(now())
@@ -100,6 +101,10 @@ model User {
   clientCoaches     CoachClient[]   @relation("ClientRelation")
   coachingNotes     CoachingNote[]  @relation("CoachNotes")
   clientNotes       CoachingNote[]  @relation("ClientNotes")
+
+  // Supplements (coach assigns to client)
+  coachSupplements  ClientSupplement[] @relation("CoachSupps")
+  clientSupplements ClientSupplement[] @relation("ClientSupps")
 
   // Subscription
   subscription      Subscription?
@@ -139,6 +144,26 @@ model CoachingNote {
 
   @@index([coachId, clientId])
   @@index([createdAt])
+}
+
+// ─── SUPPLEMENTS (coach-managed per client) ───────
+
+model ClientSupplement {
+  id        String   @id @default(uuid())
+  coachId   String
+  clientId  String
+  name      String   // "Creatine"
+  dosage    String?  // "5g daily"
+  timing    String?  // "Post-workout"
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  coach     User     @relation("CoachSupps", fields: [coachId], references: [id])
+  client    User     @relation("ClientSupps", fields: [clientId], references: [id])
+
+  @@unique([coachId, clientId, name])
+  @@index([clientId])
 }
 
 // ─── NUTRITION ─────────────────────────────────────
@@ -259,6 +284,10 @@ model Checkin {
   appetite          String?
   digestionRating   Int?
 
+  // Auto-populated from meal plan (editable if off-plan)
+  planCalories      Int?
+  planProtein       Float?
+
   steps             Int?
   cardioMinutes     Int?
   trainingStatus    String?
@@ -271,6 +300,10 @@ model Checkin {
   sorenessLevel     Int?
 
   supplements       String[]      @default([])
+  supplementLog     Json?         // [{ name, taken: bool, dosage }]
+
+  // Period tracking (both check-in styles)
+  periodDay         Boolean       @default(false)
 
   lifestyleTraining    String?    @db.Text
   lifestyleRecovery    String?    @db.Text
@@ -285,7 +318,8 @@ model Checkin {
   generalNotes      String?       @db.Text
 
   coachFeedback     String?       @db.Text
-  feedbackVideoUrl  String?
+  feedbackVideoUrl  String?       // Video recording URL
+  feedbackAudioUrl  String?       // Voice recording URL
   feedbackDate      DateTime?
 
   photos            CheckinPhoto[]

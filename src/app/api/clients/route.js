@@ -23,7 +23,8 @@ export async function GET(request) {
             id: true, name: true, email: true, avatar: true,
             gender: true, age: true, goal: true, height: true, bodyFat: true,
             calories: true, protein: true, carbs: true, fat: true,
-            allowMealSwap: true, cycleLength: true, lastCycleStart: true,
+            allowMealSwap: true, photoDay: true,
+            cycleLength: true, lastCycleStart: true,
           },
         },
       },
@@ -40,7 +41,7 @@ export async function GET(request) {
           id: true, name: true, email: true, avatar: true,
           gender: true, age: true, goal: true,
           calories: true, protein: true, carbs: true, fat: true,
-          allowMealSwap: true,
+          allowMealSwap: true, photoDay: true,
           checkins: {
             where: { status: "PENDING" },
             orderBy: { date: "desc" },
@@ -69,17 +70,18 @@ export async function POST(request) {
 
   // Update permissions
   if (body.action === "update_permissions" && body.clientId) {
-    // Verify relationship
     const rel = await prisma.coachClient.findFirst({
       where: { coachId: auth.user.id, clientId: body.clientId, active: true },
     });
     if (!rel) return NextResponse.json({ error: "Not your client" }, { status: 403 });
 
+    const patch = {};
+    if (body.allowMealSwap !== undefined) patch.allowMealSwap = body.allowMealSwap;
+    if (body.photoDay !== undefined) patch.photoDay = body.photoDay || null;
+
     const client = await prisma.user.update({
       where: { id: body.clientId },
-      data: {
-        allowMealSwap: body.allowMealSwap !== undefined ? body.allowMealSwap : undefined,
-      },
+      data: patch,
     });
     return NextResponse.json({ success: true, client });
   }
