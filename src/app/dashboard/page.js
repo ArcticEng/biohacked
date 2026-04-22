@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Card, MacroRing, SectionLabel, Avatar, C, api } from "@/components/ui";
+import { Card, MacroRing, SectionLabel, Loading, Avatar, C, api } from "@/components/ui";
 
 export default function DashboardHome() {
   const { user, isCoach, isEducator, isPremium, remaining } = useAuth();
@@ -14,9 +14,12 @@ export default function DashboardHome() {
   const [addError, setAddError] = useState("");
 
   useEffect(() => {
-    if (isEducator) { router.push("/dashboard/educator"); return; }
+    if (isEducator) { router.replace("/dashboard/educator"); return; }
     if (isCoach) api("/clients").then(d => setClients(d.clients || [])).catch(() => {});
   }, [isCoach, isEducator]);
+
+  // Educator: show nothing while redirect is in progress
+  if (isEducator) return <Loading msg="Loading educator portal" />;
 
   // ── COACH HOME ──
   if (isCoach) return (
