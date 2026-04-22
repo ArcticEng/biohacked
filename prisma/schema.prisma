@@ -71,7 +71,7 @@ model User {
 
   // Client permissions (set by their coach)
   allowMealSwap Boolean          @default(false)
-  photoDay      String?          // Day of week photos are required e.g. "Monday"
+  photoDay      String?          // Check-in day + photo day e.g. "Tuesday"
 
   // Freemium tracking
   weeklyRecipeCount  Int         @default(0)
@@ -275,6 +275,11 @@ model Checkin {
   status            CheckinStatus @default(PENDING)
   style             CheckinStyle  @default(DETAILED)
 
+  // Weekly bundling — daily drafts → weekly submission to coach
+  submitted         Boolean       @default(false)
+  weekStart         DateTime?     // Groups daily entries by week
+  weekLabel         String?       // "Cut — Week 3 (15-21 Apr)"
+
   weight            Float?
   calories          Int?
   protein           Float?
@@ -331,6 +336,7 @@ model Checkin {
   @@index([userId])
   @@index([date])
   @@index([status])
+  @@index([submitted])
 }
 
 model CheckinPhoto {

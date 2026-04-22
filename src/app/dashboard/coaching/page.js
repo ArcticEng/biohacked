@@ -303,120 +303,121 @@ export default function CoachingPage() {
         </Card>
       </>)}
 
-      {/* ── CHECK-INS ── */}
-      {tab === "check-ins" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {checkins.length === 0 ? <Empty icon="📋" title="No check-ins yet" /> : (
-            <>
-              <Card style={{ padding: 10, overflowX: "auto" }}>
-                <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
-                  <thead><tr style={{ color: C.t4, borderBottom: `1px solid ${C.border}` }}>{["Date", "Wt", "Cals", "Energy", "Sleep", "Stress", "🩸"].map(h => <th key={h} style={{ textAlign: "left", padding: "6px 8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>{h}</th>)}</tr></thead>
-                  <tbody>
-                    {checkins.slice(0, 7).map(c => (
-                      <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                        <td style={{ padding: "8px", color: C.t2 }}>{new Date(c.date).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}</td>
-                        <td style={{ padding: "8px", color: C.purple, fontWeight: 600 }}>{c.weight ?? "—"}</td>
-                        <td style={{ padding: "8px", color: C.t2 }}>{c.calories ?? "—"}</td>
-                        <td style={{ padding: "8px" }}><span style={{ background: (c.energyLevel ?? 0) >= 7 ? "var(--green-surface)" : "var(--amber-surface)", color: (c.energyLevel ?? 0) >= 7 ? C.green : C.amber, padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>{c.energyLevel ?? "—"}/10</span></td>
-                        <td style={{ padding: "8px", color: C.t2 }}>{c.sleepHours ? `${c.sleepHours}h` : "—"}</td>
-                        <td style={{ padding: "8px" }}><span style={{ background: (c.stressLevel ?? 0) >= 7 ? "var(--red-surface)" : "var(--green-surface)", color: (c.stressLevel ?? 0) >= 7 ? C.red : C.green, padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>{c.stressLevel ?? "—"}/10</span></td>
-                        <td style={{ padding: "8px" }}>{c.periodDay ? "🩸" : ""}</td>
-                      </tr>
+
+      {/* ── CHECK-INS (grouped by week) ── */}
+      {tab === "check-ins" && (() => {
+        // Group checkins by weekLabel
+        const weeks = {};
+        checkins.forEach(c => {
+          const key = c.weekLabel || new Date(c.date).toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+          if (!weeks[key]) weeks[key] = { label: key, entries: [], status: "REVIEWED", photos: [], hasNotes: false };
+          weeks[key].entries.push(c);
+          if (c.status === "PENDING") weeks[key].status = "PENDING";
+          if (c.photos?.length) weeks[key].photos.push(...c.photos);
+          if (c.generalNotes) weeks[key].hasNotes = true;
+        });
+        const weekList = Object.values(weeks);
+
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {checkins.length === 0 ? <Empty icon="📋" title="No check-ins submitted yet" sub="The client submits weekly bundles on their check-in day" /> : (
+              <>
+                {weekList.map((wk, wi) => (
+                  <Card key={wi}>
+                    {/* Week header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{wk.label}</div>
+                        <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{wk.entries.length} days logged</div>
+                      </div>
+                      <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: wk.status === "PENDING" ? "var(--amber-surface)" : "var(--green-surface)", color: wk.status === "PENDING" ? C.amber : C.green, fontWeight: 600 }}>{wk.status}</span>
+                    </div>
+
+                    {/* Daily summary table */}
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                        <thead><tr style={{ color: C.t4, borderBottom: `1px solid ${C.border}` }}>{["Day", "Wt", "Cals", "Steps", "Energy", "Sleep", "Stress", "🩸"].map(h => <th key={h} style={{ textAlign: "left", padding: "5px 6px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {wk.entries.sort((a, b) => new Date(a.date) - new Date(b.date)).map(c => (
+                            <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "6px", color: C.t2 }}>{new Date(c.date).toLocaleDateString("en-ZA", { weekday: "short", day: "numeric" })}</td>
+                              <td style={{ padding: "6px", color: C.purple, fontWeight: 600 }}>{c.weight ?? "—"}</td>
+                              <td style={{ padding: "6px", color: C.t2 }}>{c.calories ?? "—"}{c.planCalories ? <span style={{ color: C.t4 }}>/{c.planCalories}</span> : ""}</td>
+                              <td style={{ padding: "6px", color: C.t2 }}>{c.steps ? c.steps.toLocaleString() : "—"}</td>
+                              <td style={{ padding: "6px" }}><span style={{ background: (c.energyLevel ?? 0) >= 7 ? "var(--green-surface)" : "var(--amber-surface)", color: (c.energyLevel ?? 0) >= 7 ? C.green : C.amber, padding: "1px 5px", borderRadius: 4, fontWeight: 600, fontSize: 10 }}>{c.energyLevel ?? "—"}</span></td>
+                              <td style={{ padding: "6px", color: C.t2 }}>{c.sleepHours ? `${c.sleepHours}h` : "—"}</td>
+                              <td style={{ padding: "6px" }}><span style={{ background: (c.stressLevel ?? 0) >= 7 ? "var(--red-surface)" : "var(--green-surface)", color: (c.stressLevel ?? 0) >= 7 ? C.red : C.green, padding: "1px 5px", borderRadius: 4, fontWeight: 600, fontSize: 10 }}>{c.stressLevel ?? "—"}</span></td>
+                              <td style={{ padding: "6px" }}>{c.periodDay ? "🩸" : ""}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Supplement compliance for the week */}
+                    {wk.entries.some(c => c.supplementLog?.length > 0) && (
+                      <div style={{ marginTop: 10, fontSize: 11, color: C.t3, padding: "6px 10px", background: C.subtle, borderRadius: 6 }}>
+                        💊 Supps: {(() => { const allSupps = {}; wk.entries.forEach(c => { (c.supplementLog || []).forEach(s => { if (!allSupps[s.name]) allSupps[s.name] = { taken: 0, total: 0 }; allSupps[s.name].total++; if (s.taken) allSupps[s.name].taken++; }); }); return Object.entries(allSupps).map(([name, d]) => `${name} ${d.taken}/${d.total}`).join(", "); })()}
+                      </div>
+                    )}
+
+                    {/* Client notes from the week */}
+                    {wk.entries.filter(c => c.generalNotes).map(c => (
+                      <div key={c.id} style={{ fontSize: 12, color: C.t2, padding: "8px 10px", background: C.subtle, borderRadius: 8, marginTop: 8, lineHeight: 1.5 }}>
+                        <span style={{ fontSize: 10, color: C.t4 }}>{new Date(c.date).toLocaleDateString("en-ZA", { weekday: "short" })}: </span>{c.generalNotes}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </Card>
 
-              {checkins.map(ci => (
-                <Card key={ci.id}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <span style={{ fontSize: 12, color: C.t3 }}>{new Date(ci.date).toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "short" })}</span>
-                      {ci.periodDay && <span style={{ fontSize: 10 }}>🩸</span>}
-                    </div>
-                    <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: ci.status === "PENDING" ? "var(--amber-surface)" : "var(--green-surface)", color: ci.status === "PENDING" ? C.amber : C.green, fontWeight: 600 }}>{ci.status}</span>
-                  </div>
-
-                  {ci.style === "LIFESTYLE" ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {[["💪 Training", ci.lifestyleTraining], ["😴 Recovery", ci.lifestyleRecovery], ["🥗 Diet", ci.lifestyleDiet], ["🏆 Win", ci.lifestyleWin], ["🙋 From Coach", ci.lifestyleFromCoach]].filter(([_, v]) => v).map(([l, v]) => (
-                        <div key={l}><div style={{ fontSize: 11, color: C.t3, fontWeight: 600, marginBottom: 4 }}>{l}</div><div style={{ fontSize: 12, color: C.t2, lineHeight: 1.5 }}>{v}</div></div>
-                      ))}
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, fontSize: 11 }}>
-                        {ci.weight && <div><span style={{ color: C.t4 }}>Weight: </span><span style={{ color: C.purple, fontWeight: 600 }}>{ci.weight}kg</span></div>}
-                        {ci.calories && <div><span style={{ color: C.t4 }}>Cals: </span><span style={{ color: C.t2 }}>{ci.calories}{ci.planCalories ? <span style={{ color: C.t4 }}> / {ci.planCalories}</span> : ""}</span></div>}
-                        {ci.protein && <div><span style={{ color: C.t4 }}>Protein: </span><span style={{ color: C.t2 }}>{ci.protein}g{ci.planProtein ? <span style={{ color: C.t4 }}> / {ci.planProtein}g</span> : ""}</span></div>}
-                        {ci.steps && <div><span style={{ color: C.t4 }}>Steps: </span><span style={{ color: C.t2 }}>{ci.steps.toLocaleString()}</span></div>}
-                        {ci.hydration && <div><span style={{ color: C.t4 }}>Water: </span><span style={{ color: C.t2 }}>{ci.hydration}L</span></div>}
-                        {ci.caffeine && <div><span style={{ color: C.t4 }}>Caffeine: </span><span style={{ color: C.t2 }}>{ci.caffeine}mg</span></div>}
+                    {/* Photos strip */}
+                    {wk.photos.length > 0 && (
+                      <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+                        {wk.photos.map(p => (
+                          <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                            <div style={{ width: 60, height: 60, borderRadius: 8, background: `url(${p.url}) center/cover`, border: `1px solid ${C.border}` }} />
+                            <div style={{ fontSize: 9, color: C.t4, textAlign: "center", marginTop: 2, textTransform: "capitalize" }}>{p.type}</div>
+                          </a>
+                        ))}
                       </div>
-                      {ci.supplementLog && Array.isArray(ci.supplementLog) && ci.supplementLog.length > 0 && (
-                        <div style={{ marginTop: 8, fontSize: 11, color: C.t3 }}>
-                          Supps: {ci.supplementLog.filter(s => s.taken).map(s => s.name).join(", ") || "none taken"}
-                        </div>
-                      )}
-                    </>
-                  )}
+                    )}
 
-                  {/* Photos */}
-                  {ci.photos?.length > 0 && (
-                    <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                      {ci.photos.map(p => (
-                        <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
-                          <div style={{ width: 52, height: 52, borderRadius: 6, background: `url(${p.url}) center/cover`, border: `1px solid ${C.border}` }} />
-                          <div style={{ fontSize: 9, color: C.t4, textAlign: "center", marginTop: 2, textTransform: "capitalize" }}>{p.type}</div>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-
-                  {ci.generalNotes && <div style={{ fontSize: 12, color: C.t2, padding: "10px 12px", background: C.subtle, borderRadius: 8, marginTop: 10, lineHeight: 1.5 }}>{ci.generalNotes}</div>}
-
-                  {/* Existing feedback */}
-                  {ci.coachFeedback && <div style={{ fontSize: 12, color: C.green, padding: "10px 12px", background: "var(--green-surface)", borderRadius: 8, marginTop: 8, lineHeight: 1.5 }}>Your feedback: {ci.coachFeedback}</div>}
-                  {ci.feedbackAudioUrl && <audio controls src={ci.feedbackAudioUrl} style={{ width: "100%", marginTop: 6, borderRadius: 8 }} />}
-
-                  {/* Write feedback */}
-                  {ci.status === "PENDING" && (
-                    feedbackId === ci.id ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
-                        <textarea placeholder="Write feedback..." value={feedbackText} onChange={e => setFeedbackText(e.target.value)} style={{ width: "100%", minHeight: 70, ...inputStyle, resize: "vertical" }} />
-
-                        {/* Voice recording */}
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          {!recording && !audioUrl && (
-                            <button onClick={startRecording} style={{ background: "var(--red-surface)", border: "1px solid rgba(239,68,68,0.3)", color: C.red, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'" }}>🎤 Record voice</button>
-                          )}
-                          {recording && (
-                            <button onClick={stopRecording} style={{ background: "var(--red-surface)", border: "1px solid rgba(239,68,68,0.5)", color: C.red, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'", animation: "bh-pulse 1.2s ease-in-out infinite" }}>⏹ Stop recording</button>
-                          )}
-                          {audioUrl && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-                              <audio controls src={audioUrl} style={{ flex: 1, height: 32 }} />
-                              <button onClick={() => setAudioUrl(null)} style={{ background: "none", border: "none", color: C.t4, cursor: "pointer", fontSize: 13 }}>×</button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <Btn variant="secondary" onClick={() => { setFeedbackId(null); setFeedbackText(""); setAudioUrl(null); }} style={{ flex: 1 }}>Cancel</Btn>
-                          <Btn onClick={submitFeedback} disabled={busy} style={{ flex: 1 }}>Send</Btn>
-                        </div>
+                    {/* Existing coach feedback */}
+                    {wk.entries.some(c => c.coachFeedback) && (
+                      <div style={{ fontSize: 12, color: C.green, padding: "10px 12px", background: "var(--green-surface)", borderRadius: 8, marginTop: 10, lineHeight: 1.5 }}>
+                        Your feedback: {wk.entries.find(c => c.coachFeedback)?.coachFeedback}
                       </div>
-                    ) : (
-                      <Btn variant="secondary" onClick={() => setFeedbackId(ci.id)} style={{ marginTop: 8 }}>Write feedback</Btn>
-                    )
-                  )}
-                </Card>
-              ))}
-            </>
-          )}
-        </div>
-      )}
+                    )}
+                    {wk.entries.some(c => c.feedbackAudioUrl) && (
+                      <audio controls src={wk.entries.find(c => c.feedbackAudioUrl)?.feedbackAudioUrl} style={{ width: "100%", marginTop: 6, borderRadius: 8 }} />
+                    )}
 
+                    {/* Write feedback for this week — targets the first PENDING entry */}
+                    {wk.status === "PENDING" && (() => {
+                      const targetId = wk.entries.find(c => c.status === "PENDING")?.id;
+                      if (!targetId) return null;
+                      return feedbackId === targetId ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                          <textarea placeholder="Write weekly feedback..." value={feedbackText} onChange={e => setFeedbackText(e.target.value)} style={{ width: "100%", minHeight: 70, ...inputStyle, resize: "vertical" }} />
+                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            {!recording && !audioUrl && <button onClick={startRecording} style={{ background: "var(--red-surface)", border: "1px solid rgba(239,68,68,0.3)", color: C.red, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'" }}>🎤 Record voice</button>}
+                            {recording && <button onClick={stopRecording} style={{ background: "var(--red-surface)", border: "1px solid rgba(239,68,68,0.5)", color: C.red, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'" }}>⏹ Stop</button>}
+                            {audioUrl && <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}><audio controls src={audioUrl} style={{ flex: 1, height: 32 }} /><button onClick={() => setAudioUrl(null)} style={{ background: "none", border: "none", color: C.t4, cursor: "pointer", fontSize: 13 }}>×</button></div>}
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <Btn variant="secondary" onClick={() => { setFeedbackId(null); setFeedbackText(""); setAudioUrl(null); }} style={{ flex: 1 }}>Cancel</Btn>
+                            <Btn onClick={submitFeedback} disabled={busy} style={{ flex: 1 }}>Send feedback</Btn>
+                          </div>
+                        </div>
+                      ) : (
+                        <Btn variant="secondary" onClick={() => setFeedbackId(targetId)} style={{ marginTop: 10 }}>Write weekly feedback</Btn>
+                      );
+                    })()}
+                  </Card>
+                ))}
+              </>
+            )}
+          </div>
+        );
+      })()}
       {/* ── PROGRAM ── */}
       {tab === "program" && (<div style={{ display: "flex", flexDirection: "column", gap: 14 }}>{!builderOpen && (<>{program ? (<Card><div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}><div style={{ fontSize: 17, fontWeight: 700, fontFamily: "'Syne'" }}>{program.name}</div><span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "var(--green-surface)", color: C.green, fontWeight: 600 }}>ACTIVE</span></div><div style={{ display: "flex", gap: 8, marginTop: 10 }}><Btn onClick={() => openBuilder(program)} style={{ flex: 1 }}>Edit program</Btn><Btn variant="danger" onClick={deactivateProgram} disabled={busy}>Deactivate</Btn></div></Card>) : (<Empty icon="💪" title="No program assigned" sub="Build a weekly training program" />)}{program && (program.days || []).map(d => (<Card key={d.id} style={{ padding: 14 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><div><span style={{ fontWeight: 700, fontSize: 14 }}>{d.dayName}</span>{d.focus && <span style={{ fontSize: 12, color: C.t3, marginLeft: 8 }}>· {d.focus}</span>}</div>{!d.exercises?.length && <span style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", letterSpacing: 1 }}>Rest</span>}</div>{(d.exercises || []).map(ex => (<div key={ex.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "6px 0", borderTop: `1px solid ${C.border}` }}><div style={{ color: C.t2 }}>{ex.name}</div><div style={{ color: C.t3 }}>{ex.sets} × {ex.reps}{ex.weight ? ` @ ${ex.weight}kg` : ""}</div></div>))}</Card>))}{!program && <Btn onClick={() => openBuilder(null)}>+ Create training program</Btn>}</>)}{builderOpen && (<><Card><SectionLabel>Program details</SectionLabel><div style={{ marginTop: 10 }}><label style={{ fontSize: 11, color: C.t3, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, display: "block", marginBottom: 6 }}>Name</label><input value={programName} onChange={e => setProgramName(e.target.value)} placeholder="e.g. Physique Shred — Phase 2" style={{ width: "100%", ...inputStyle, padding: "10px 14px", borderRadius: 10, fontSize: 14 }} /></div></Card>{programDays.map((d, di) => (<Card key={d.dayOfWeek} style={{ padding: 14 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10 }}><div style={{ fontSize: 14, fontWeight: 700 }}>{d.dayOfWeek}</div><input value={d.focus} onChange={e => setDayFocus(di, e.target.value)} placeholder="Focus" style={{ flex: 1, ...inputStyle, padding: "6px 10px", fontSize: 12 }} /></div>{d.exercises.map((ex, ei) => (<div key={ei} style={{ padding: 10, background: C.subtle, borderRadius: 8, marginBottom: 8 }}><div style={{ display: "flex", gap: 6, marginBottom: 6 }}><input value={ex.name} onChange={e => updateExercise(di, ei, "name", e.target.value)} placeholder="Exercise" style={{ flex: 1, ...inputStyle, padding: "8px 10px", fontSize: 12 }} /><button onClick={() => removeExercise(di, ei)} style={{ background: "none", border: `1px solid ${C.border}`, color: C.t4, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 14 }}>×</button></div><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>{[["Sets","sets","number"],["Reps","reps","text"],["Wt kg","weight","number"]].map(([l,k,t]) => (<div key={k}><div style={{ fontSize: 9, color: C.t4, marginBottom: 2, textTransform: "uppercase", letterSpacing: 1 }}>{l}</div><input type={t} value={ex[k]} onChange={e => updateExercise(di, ei, k, e.target.value)} style={{ width: "100%", ...inputStyle, padding: "6px 8px", fontSize: 12 }} /></div>))}</div></div>))}<button onClick={() => addExercise(di)} style={{ width: "100%", background: "var(--purple-surface)", border: "1px dashed var(--purple-border)", color: C.purple, padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'" }}>+ Add exercise</button></Card>))}<div style={{ display: "flex", gap: 8 }}><Btn variant="secondary" onClick={() => setBuilderOpen(false)} style={{ flex: 1 }}>Cancel</Btn><Btn onClick={saveProgram} disabled={busy} style={{ flex: 2 }}>{busy ? "Saving..." : (program ? "Update" : "Save")}</Btn></div></>)}</div>)}
 
