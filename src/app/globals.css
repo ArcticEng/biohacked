@@ -5,10 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@400;500;600;700;800&display=swap');
 
 /* ─── THEME VARIABLES ──────────────────────────── */
-/* Default = DARK. Brand accents stay identical across themes. */
 :root,
 :root[data-theme="dark"] {
-  /* Brand — same in both modes */
   --brand-purple: #a855f7;
   --brand-pink: #ec4899;
   --brand-violet: #8b5cf6;
@@ -19,7 +17,6 @@
   --brand-teal: #14b8a6;
   --brand-blue: #3b82f6;
 
-  /* Surfaces & text — theme-dependent */
   --bg-primary: #0a0a0f;
   --bg-gradient: linear-gradient(145deg, #0a0a0f 0%, #0d0b1a 40%, #110e1f 100%);
   --bg-card: rgba(255,255,255,0.03);
@@ -31,14 +28,13 @@
   --border: rgba(255,255,255,0.06);
   --border-strong: rgba(255,255,255,0.1);
 
-  --text-1: #fff;
+  --text-1: #ffffff;
   --text-2: rgba(255,255,255,0.7);
   --text-3: rgba(255,255,255,0.4);
   --text-4: rgba(255,255,255,0.2);
   --placeholder: rgba(255,255,255,0.25);
   --scrollbar: rgba(255,255,255,0.1);
 
-  /* Brand alpha surfaces — used for active pills, highlights */
   --purple-surface: rgba(168,85,247,0.08);
   --purple-border: rgba(168,85,247,0.2);
   --pink-surface: rgba(236,72,153,0.08);
@@ -50,27 +46,27 @@
 }
 
 :root[data-theme="light"] {
-  --bg-primary: #f5f6fa;
-  --bg-gradient: linear-gradient(145deg, #f5f6fa 0%, #eef0f8 40%, #e8ecf5 100%);
+  --bg-primary: #f4f5f9;
+  --bg-gradient: linear-gradient(145deg, #f4f5f9 0%, #eceef6 40%, #e6e9f3 100%);
   --bg-card: #ffffff;
-  --bg-elevated: rgba(15,23,42,0.04);
-  --bg-subtle: rgba(15,23,42,0.02);
+  --bg-elevated: #f0f1f5;
+  --bg-subtle: #f7f8fb;
   --bg-input: #ffffff;
-  --bg-overlay-strong: rgba(245,246,250,0.95);
+  --bg-overlay-strong: rgba(255,255,255,0.97);
 
-  --border: rgba(15,23,42,0.08);
-  --border-strong: rgba(15,23,42,0.14);
+  --border: #e0e3eb;
+  --border-strong: #cdd1dc;
 
-  --text-1: #0f172a;
-  --text-2: rgba(15,23,42,0.75);
-  --text-3: rgba(15,23,42,0.5);
-  --text-4: rgba(15,23,42,0.3);
-  --placeholder: rgba(15,23,42,0.3);
-  --scrollbar: rgba(15,23,42,0.15);
+  /* KEY FIX: solid dark colors, not transparent rgba */
+  --text-1: #1a1d2e;
+  --text-2: #3d4155;
+  --text-3: #6b7085;
+  --text-4: #9ca0b2;
+  --placeholder: #9ca0b2;
+  --scrollbar: #cdd1dc;
 
-  /* Slightly darker alpha for better contrast on light bg */
   --purple-surface: rgba(168,85,247,0.10);
-  --purple-border: rgba(168,85,247,0.28);
+  --purple-border: rgba(168,85,247,0.30);
   --pink-surface: rgba(236,72,153,0.10);
   --amber-surface: rgba(245,158,11,0.12);
   --green-surface: rgba(34,197,94,0.10);
@@ -79,11 +75,7 @@
   color-scheme: light;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   background: var(--bg-primary);
@@ -91,13 +83,10 @@ html, body {
   font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  transition: background 0.3s, color 0.2s;
+  transition: background 0.25s, color 0.15s;
 }
 
-input, textarea, select, button {
-  font-family: inherit;
-  color: inherit;
-}
+input, textarea, select, button { font-family: inherit; }
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -105,48 +94,108 @@ input[type=number] { -moz-appearance: textfield; }
 
 ::placeholder { color: var(--placeholder); }
 
-input[type=range] {
-  height: 4px;
-  -webkit-appearance: none;
-  background: var(--border-strong);
-  border-radius: 2px;
-  outline: none;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--brand-purple);
-  cursor: pointer;
-}
+input[type=range] { height: 4px; -webkit-appearance: none; background: var(--border-strong); border-radius: 2px; outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--brand-purple); cursor: pointer; }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .fade-up { animation: fadeUp 0.35s ease forwards; }
-
 @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
 
-/* ─── LIGHT-MODE PATCHES ───────────────────────
-   The codebase has scattered inline styles using rgba(255,255,255,...) literals
-   that assume dark bg. These selectors soften them in light mode.
-─────────────────────────────────────────────── */
-:root[data-theme="light"] [style*="rgba(255,255,255,0.04)"] { background: var(--bg-input) !important; }
-:root[data-theme="light"] [style*="rgba(255,255,255,0.02)"] { background: var(--bg-subtle) !important; }
-:root[data-theme="light"] [style*="rgba(255,255,255,0.03)"] { background: var(--bg-card) !important; }
-:root[data-theme="light"] [style*="rgba(255,255,255,0.05)"] { background: var(--bg-elevated) !important; }
-:root[data-theme="light"] [style*="rgba(255,255,255,0.06)"] { background: var(--bg-elevated) !important; }
-:root[data-theme="light"] [style*="rgba(10,10,15,0.95)"] { background: var(--bg-overlay-strong) !important; }
-:root[data-theme="light"] [style*="background: #1a1a2e"],
-:root[data-theme="light"] [style*="background:#1a1a2e"] { background: var(--bg-card) !important; color: var(--text-1) !important; }
+/* ═══════════════════════════════════════════════════
+   LIGHT-MODE OVERRIDES
+   The codebase has inline styles using rgba(255,255,255,...) backgrounds
+   and hardcoded color:"#fff" text. These catch-all rules fix both.
+   ═══════════════════════════════════════════════════ */
 
-/* Force text color on elements that hardcode #fff */
+/* ── Background fixes ── */
+:root[data-theme="light"] [style*="rgba(255,255,255,0.02)"],
+:root[data-theme="light"] [style*="rgba(255,255,255,0.03)"],
+:root[data-theme="light"] [style*="rgba(255,255,255,0.04)"],
+:root[data-theme="light"] [style*="rgba(255,255,255,0.05)"],
+:root[data-theme="light"] [style*="rgba(255,255,255,0.06)"] {
+  background: var(--bg-card) !important;
+}
+
+:root[data-theme="light"] [style*="rgba(10,10,15,0.95)"] {
+  background: var(--bg-overlay-strong) !important;
+}
+
+:root[data-theme="light"] [style*="background: #1a1a2e"],
+:root[data-theme="light"] [style*="background:#1a1a2e"] {
+  background: var(--bg-card) !important;
+}
+
+/* ── TEXT COLOR fixes — this is the big one ── */
+/* Catch hardcoded color: #fff and color: "#fff" */
 :root[data-theme="light"] input,
 :root[data-theme="light"] textarea,
-:root[data-theme="light"] select { color: var(--text-1) !important; }
+:root[data-theme="light"] select {
+  color: var(--text-1) !important;
+}
+
+/* Force all divs/spans/buttons/labels that hardcode white text */
+:root[data-theme="light"] [style*="color: #fff"],
+:root[data-theme="light"] [style*="color:#fff"],
+:root[data-theme="light"] [style*='color: "#fff"'],
+:root[data-theme="light"] [style*="color: rgb(255, 255, 255)"],
+:root[data-theme="light"] [style*="color: white"] {
+  color: var(--text-1) !important;
+}
+
+/* Catch rgba white text used for secondary text */
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.7)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.7)"] {
+  color: var(--text-2) !important;
+}
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.4)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.4)"],
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.35)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.35)"] {
+  color: var(--text-3) !important;
+}
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.2)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.2)"],
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.25)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.25)"],
+:root[data-theme="light"] [style*="color: rgba(255,255,255,0.3)"],
+:root[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.3)"] {
+  color: var(--text-4) !important;
+}
+
+/* ── Border fixes ── */
+:root[data-theme="light"] [style*="border: 1px solid rgba(255,255,255,0.06)"],
+:root[data-theme="light"] [style*="border: 1px solid rgba(255,255,255,0.08)"],
+:root[data-theme="light"] [style*="border: 1px solid rgba(255,255,255,0.1)"],
+:root[data-theme="light"] [style*="border-color: rgba(255,255,255,0.06)"] {
+  border-color: var(--border) !important;
+}
+
+/* Dashed borders */
+:root[data-theme="light"] [style*="border: 2px dashed rgba(255,255,255"] {
+  border-color: var(--border) !important;
+}
+
+/* ── Card shadow for depth in light mode ── */
+:root[data-theme="light"] [style*="border-radius: 16px"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+/* ── Tooltip/chart fixes ── */
+:root[data-theme="light"] .recharts-tooltip-wrapper {
+  filter: none !important;
+}
+
+/* ── Select dropdown option text ── */
+:root[data-theme="light"] option {
+  background: #fff;
+  color: #1a1d2e;
+}
+
+/* ── SVG text in macro rings ── */
+:root[data-theme="light"] svg text {
+  fill: var(--text-1);
+}
