@@ -5,12 +5,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { requireAuth, checkRecipeLimit, incrementRecipeCount } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { generateRecipe } from "@/lib/ai";
 import { recipeQuerySchema } from "@/lib/validation";
 
 export async function POST(request) {
   const auth = await requireAuth(request);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  // Rate limit AI calls — 10 per 5 minutes per user
+  const rl = checkRateLimit(request, { limit: 10, windowMs: 300000, prefix: "recipe" });
+  if (rl) return NextResponse.json({ error: rl.error }, { status: rl.status });
 
   const body = await request.json();
 
@@ -42,7 +47,11 @@ export async function POST(request) {
 
   const { query, calories, protein, carbs, fat, mode, event, maxPrepTime } = parsed.data;
 
-  const result = await generateRecipe({ query, calories, protein, carbs, fat, mode, event, maxPrepTime });
+  // Get user's dietary restrictions
+  const userProfile = await prisma.user.findUnique({ where: { id: auth.user.id }, select: { dietaryRestrictions: true } });
+  const dietaryRestrictions = userProfile?.dietaryRestrictions || [];
+
+  const result = await generateRecipe({ query, calories, protein, carbs, fat, mode, event, maxPrepTime, dietaryRestrictions });
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });

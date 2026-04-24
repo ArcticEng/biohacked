@@ -40,10 +40,12 @@ export function Btn({ children, variant = "primary", disabled, ...props }) {
   return <button disabled={disabled} {...props} style={{ ...s, ...props.style }}>{children}</button>;
 }
 
-export function Inp({ label, ...props }) {
+export function Inp({ label, inputMode, ...props }) {
+  // Auto-set inputMode for number fields on mobile
+  const autoMode = props.type === "number" ? (props.step ? "decimal" : "numeric") : undefined;
   return (<div style={{ width: "100%" }}>
     {label && <label style={{ fontSize: 11, color: C.t3, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, display: "block", marginBottom: 6 }}>{label}</label>}
-    <input {...props} style={{ width: "100%", background: C.input, border: `1px solid ${C.border}`, color: C.t1, padding: "12px 14px", borderRadius: 10, fontSize: 14, fontFamily: "'DM Sans'", outline: "none", ...props.style }} />
+    <input inputMode={inputMode || autoMode} {...props} style={{ width: "100%", background: C.input, border: `1px solid ${C.border}`, color: C.t1, padding: "12px 14px", borderRadius: 10, fontSize: 14, fontFamily: "'DM Sans'", outline: "none", ...props.style }} />
   </div>);
 }
 

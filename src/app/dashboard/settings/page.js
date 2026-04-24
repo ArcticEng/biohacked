@@ -207,6 +207,17 @@ export default function SettingsPage() {
         </div>
       </Card>
 
+      <Card>
+        <SectionLabel>Your data</SectionLabel>
+        <p style={{ fontSize: 12, color: C.t3, marginTop: 6 }}>Download all your data as JSON (POPIA compliance).</p>
+        <Btn variant="secondary" onClick={() => window.open("/api/export", "_blank")} style={{ marginTop: 10 }}>Export my data</Btn>
+      </Card>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 11, color: C.t4 }}>
+        <a href="/terms" style={{ color: C.t4, textDecoration: "none" }}>Terms</a>
+        <a href="/privacy" style={{ color: C.t4, textDecoration: "none" }}>Privacy Policy</a>
+      </div>
+
       <Btn variant="danger" onClick={logout}>Log out</Btn>
     </div>
   );

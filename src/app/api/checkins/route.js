@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { sendCheckinNotification, sendFeedbackNotification } from "@/lib/email";
 
 async function verifyCoachOfClient(coachId, clientId) {
   const rel = await prisma.coachClient.findFirst({ where: { coachId, clientId, active: true } });
@@ -34,6 +35,11 @@ export async function POST(request) {
         status: "REVIEWED",
       },
     });
+
+    // Notify client about feedback
+    const client = await prisma.user.findUnique({ where: { id: existing.userId }, select: { email: true } });
+    if (client?.email) sendFeedbackNotification(client.email, auth.user.name).catch(() => {});
+
     return NextResponse.json({ checkin });
   }
 
@@ -51,6 +57,10 @@ export async function POST(request) {
       },
       data: { submitted: true, status: "PENDING" },
     });
+
+    // Notify coach about new weekly check-in
+    const coachRel = await prisma.coachClient.findFirst({ where: { clientId: auth.user.id, active: true }, include: { coach: true } });
+    if (coachRel?.coach?.email) sendCheckinNotification(coachRel.coach.email, auth.user.name).catch(() => {});
 
     return NextResponse.json({ submitted: updated.count });
   }

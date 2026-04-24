@@ -162,8 +162,11 @@ export default function LoginPage() {
             </button>
           )}
 
+          {mode === "login" && <div style={{ textAlign: "center", marginTop: 8 }}><a href="/forgot-password" style={{ color: C.t3, fontSize: 12, textDecoration: "none" }}>Forgot password?</a></div>}
           {mode === "register" && step === 2 && <button type="button" onClick={() => setStep(1)} style={{ color: C.t3, fontSize: 13, background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans'" }}>← Back</button>}
         </form>
+
+        <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: C.t4 }}><a href="/terms" style={{ color: C.t4, textDecoration: "none" }}>Terms</a> · <a href="/privacy" style={{ color: C.t4, textDecoration: "none" }}>Privacy</a></div>
 
         <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
           <p style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 10, textAlign: "center" }}>Demo accounts</p>

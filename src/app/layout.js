@@ -1,24 +1,17 @@
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import ErrorBoundary from "@/components/error-boundary";
 
 export const metadata = {
   title: "Bio-Hacked",
   description: "AI-powered nutrition, coaching & community platform",
   applicationName: "Bio-Hacked",
-  appleWebApp: {
-    capable: true,
-    title: "Bio-Hacked",
-    statusBarStyle: "black-translucent",
-  },
+  appleWebApp: { capable: true, title: "Bio-Hacked", statusBarStyle: "black-translucent" },
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
-    apple: [
-      { url: "/apple-icon.svg", sizes: "180x180", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.svg", sizes: "180x180", type: "image/svg+xml" }],
   },
 };
 
@@ -27,12 +20,9 @@ export const viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
     { media: "(prefers-color-scheme: light)", color: "#f5f6fa" },
   ],
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
+  width: "device-width", initialScale: 1, maximumScale: 1,
 };
 
-// Inline script runs before React hydrates — prevents flash of wrong theme
 const noFlashScript = `
   try {
     var t = localStorage.getItem('biohacked-theme');
@@ -50,9 +40,11 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
       <body>
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

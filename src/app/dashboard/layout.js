@@ -5,11 +5,21 @@ import { useRouter, usePathname } from "next/navigation";
 import { Loading, ThemeToggle, C } from "@/components/ui";
 
 export default function DashboardLayout({ children }) {
-  const { user, loading, isCoach, isEducator } = useAuth();
+  const { user, loading, isCoach, isEducator, sessionExpired, dismissSessionExpired } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   if (loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><Loading /></div>;
+  if (sessionExpired) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "var(--bg-gradient)" }}>
+      <div style={{ textAlign: "center", maxWidth: 360 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontFamily: "'Syne'", fontSize: 20, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Session expired</h2>
+        <p style={{ color: C.t3, fontSize: 14, marginBottom: 24 }}>Your session has timed out. Please log in again.</p>
+        <button onClick={dismissSessionExpired} style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: "#fff", padding: "14px 28px", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans'" }}>Log in again</button>
+      </div>
+    </div>
+  );
   if (!user) { router.push("/login"); return null; }
 
   const navItems = isEducator ? [

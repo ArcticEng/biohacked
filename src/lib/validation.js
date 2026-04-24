@@ -33,6 +33,9 @@ export const updateProfileSchema = z.object({
   speciality: z.string().optional(),
   cycleLength: z.number().int().positive().optional(),
   lastCycleStart: z.string().optional(),
+  avatar: z.string().optional(),
+  onboarded: z.boolean().optional(),
+  dietaryRestrictions: z.array(z.string()).optional(),
 });
 
 export const recipeQuerySchema = z.object({

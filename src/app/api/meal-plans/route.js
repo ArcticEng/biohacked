@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { generateMealPlan, generateMealSwap } from "@/lib/ai";
 import { mealPlanQuerySchema, mealSwapSchema } from "@/lib/validation";
 

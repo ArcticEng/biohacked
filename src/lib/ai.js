@@ -17,7 +17,8 @@ function parseJSON(text) {
 
 // ─── Recipe Generation (3 modes) ──────────────────
 
-export async function generateRecipe({ query, calories, protein, carbs, fat, mode = "macro", event, maxPrepTime }) {
+export async function generateRecipe({ query, calories, protein, carbs, fat, mode = "macro", event, maxPrepTime, dietaryRestrictions = [] }) {
+  const restrictionNote = dietaryRestrictions.length > 0 ? `\n\nCRITICAL DIETARY RESTRICTIONS (do NOT include these ingredients): ${dietaryRestrictions.join(", ")}. Any recipe that violates these restrictions is unsafe for this person.\n` : "";
   let prompt;
 
   if (mode === "craving") {
@@ -27,7 +28,7 @@ Situation: ${event || "general craving"}
 Calorie budget: ${calories} kcal
 Max prep time: ${maxPrepTime || 30} minutes
 
-Create something that fits the occasion (e.g. Movie Night = snacky/comforting, Date Night = presentable/appealing, Quick Prep = minimal steps, Post-Workout = anabolic window appropriate).
+Create something that fits the occasion (e.g. Movie Night = snacky/comforting, Date Night = presentable/appealing, Quick Prep = minimal steps, Post-Workout = anabolic window appropriate).${restrictionNote}
 
 Respond ONLY with valid JSON, no markdown:
 {
@@ -58,7 +59,7 @@ REQUIREMENTS:
 1. Hit macros within 5% tolerance
 2. Exact gram measurements for every ingredient
 3. Accessible ingredients
-4. Practical cooking instructions
+4. Practical cooking instructions${restrictionNote}
 
 Respond ONLY with valid JSON, no markdown:
 {
@@ -91,7 +92,8 @@ Respond ONLY with valid JSON, no markdown:
 
 // ─── Meal Plan Generation ──────────────────────────
 
-export async function generateMealPlan({ calories, protein, carbs, fat, goal, meals = 4 }) {
+export async function generateMealPlan({ calories, protein, carbs, fat, goal, meals = 4, dietaryRestrictions = [] }) {
+  const restrictionNote = dietaryRestrictions.length > 0 ? `\nCRITICAL DIETARY RESTRICTIONS (do NOT include): ${dietaryRestrictions.join(", ")}.\n` : "";
   const goalContext = {
     BUILD: "Muscle-building phase. Prioritise calorie-dense nutrient-rich foods. Time carbs around training.",
     CUT: "Cutting phase. Prioritise high-volume, low-calorie foods for satiety. Keep protein high.",
@@ -108,7 +110,7 @@ Daily targets:
 - Protein: ${protein}g, Carbs: ${carbs}g, Fat: ${fat}g
 - Meals: ${meals}
 
-Distribute macros intelligently. Sum to daily targets within 2% tolerance. Exact gram measurements.
+Distribute macros intelligently. Sum to daily targets within 2% tolerance. Exact gram measurements.${restrictionNote}
 
 Respond ONLY with valid JSON:
 {
