@@ -5,5 +5,11 @@
     "src/app/api/**/route.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
